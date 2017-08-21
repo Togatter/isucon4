@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 import MySQLdb
 from MySQLdb.cursors import DictCursor
 
