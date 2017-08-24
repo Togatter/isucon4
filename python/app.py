@@ -9,12 +9,15 @@ from flask import (
 from werkzeug.contrib.fixers import ProxyFix
 
 import os, hashlib
-from datetime import date
+
+from cache_client import CacheClient
 
 config = {}
 app = Flask(__name__, static_url_path='')
 app.wsgi_app = ProxyFix(app.wsgi_app)
 app.secret_key = os.environ.get('ISU4_SESSION_SECRET', 'shirokane')
+
+redis_client = CacheClient.get()
 
 def load_config():
     global config
@@ -42,39 +45,62 @@ def get_db():
 def calculate_password_hash(password, salt):
     return hashlib.sha256(password + ':' + salt).hexdigest()
 
+def reset_count(type, key):
+    if type is 'user':
+        redis_client.user_count_reset(key)
+    elif type is 'ip':
+        redis_client.ip_count_reset(key)
+
+def inc_count(type, key):
+    if type is 'user':
+        redis_client.user_count_inc(key, 1)
+    elif type is 'ip':
+        redis_client.ip_count_inc(key, 1)
+
 def login_log(succeeded, login, user_id=None):
     print('login_log: ' + str(succeeded) + ', ' + login + ', ' + str(user_id))
-    db = get_db()
-    cur = db.cursor()
-    cur.execute(
-        'INSERT INTO login_log (`created_at`, `user_id`, `login`, `ip`, `succeeded`) VALUES (NOW(),%s,%s,%s,%s)',
-        (user_id, login, request.remote_addr, 1 if succeeded else 0)
-    )
-    cur.close()
-    db.commit()
+    # db = get_db()
+    # cur = db.cursor()
+    # cur.execute(
+    #     'INSERT INTO login_log (`created_at`, `user_id`, `login`, `ip`, `succeeded`) VALUES (NOW(),%s,%s,%s,%s)',
+    #     (user_id, login, request.remote_addr, 1 if succeeded else 0)
+    # )
+    # cur.close()
+    # db.commit()
+
+    type, key = ('user', user_id) if user_id else ('ip', request.remote_addr)
+
+    if succeeded:
+        reset_count(type, key)
+    else:
+        inc_count(type, key)
 
 def user_locked(user):
     if not user:
         return None
-    cur = get_db().cursor()
-    cur.execute(
-        'SELECT COUNT(1) AS failures FROM login_log WHERE user_id = %s AND id > IFNULL((select id from login_log where user_id = %s AND succeeded = 1 ORDER BY id DESC LIMIT 1), 0);',
-        (user['id'], user['id'])
-    )
-    log = cur.fetchone()
-    cur.close()
-    return config['user_lock_threshold'] <= log['failures']
+    # cur = get_db().cursor()
+    # cur.execute(
+    #     'SELECT COUNT(1) AS failures FROM login_log WHERE user_id = %s AND id > IFNULL((select id from login_log where user_id = %s AND succeeded = 1 ORDER BY id DESC LIMIT 1), 0);',
+    #     (user['id'], user['id'])
+    # )
+    # log = cur.fetchone()
+    # cur.close()
+
+    failures = redis_client.get_user_count(user['id'])
+    return config['user_lock_threshold'] <= failures
 
 def ip_banned():
     global config
-    cur = get_db().cursor()
-    cur.execute(
-        'SELECT COUNT(1) AS failures FROM login_log WHERE ip = %s AND id > IFNULL((select id from login_log where ip = %s AND succeeded = 1 ORDER BY id DESC LIMIT 1), 0)',
-        (request.remote_addr, request.remote_addr)
-    )
-    log = cur.fetchone()
-    cur.close()
-    return config['ip_ban_threshold'] <= log['failures']
+    # cur = get_db().cursor()
+    # cur.execute(
+    #     'SELECT COUNT(1) AS failures FROM login_log WHERE ip = %s AND id > IFNULL((select id from login_log where ip = %s AND succeeded = 1 ORDER BY id DESC LIMIT 1), 0)',
+    #     (request.remote_addr, request.remote_addr)
+    # )
+    # log = cur.fetchone()
+    # cur.close()
+
+    failures = redis_client.get_ip_count(request.remote_addr)
+    return config['ip_ban_threshold'] <= failures
 
 def attempt_login(login, password):
     cur = get_db().cursor()
