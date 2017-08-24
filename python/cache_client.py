@@ -40,7 +40,7 @@ class RedisClient(BaseClient):
         self.client.delete(self._key(key))
 
     def get_ip_count(self, value):
-        return int(self.client.zcard(value))
+        return int(self.client.zscore(self._ip_count_key, value))
 
     def ip_count_inc(self, value, num):
         return self.client.zincrby(self._ip_count_key , value, num)
@@ -49,7 +49,7 @@ class RedisClient(BaseClient):
         self.client.zrem(self._ip_count_key, value)
 
     def get_user_count(self, value):
-        return int(self.client.zcard(value))
+        return int(self.client.zscore(self._user_count_key, value))
 
     def user_count_inc(self, value, num):
         return self.client.zincrby(self._user_count_key , value, num)
