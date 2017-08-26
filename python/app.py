@@ -68,12 +68,13 @@ def login_log(succeeded, login, user_id=None):
     # cur.close()
     # db.commit()
 
-    type, key = ('user', user_id) if user_id else ('ip', request.remote_addr)
-
     if succeeded:
-        reset_count(type, key)
+        reset_count('user', user_id)
+        reset_count('ip', request.remote_addr)
     else:
-        inc_count(type, key)
+        if user_id:
+            inc_count('user', user_id)
+        inc_count('ip', request.remote_addr)
 
 def user_locked(user):
     if not user:
@@ -86,7 +87,7 @@ def user_locked(user):
     # log = cur.fetchone()
     # cur.close()
 
-    failures = redis_client.get_user_count(user['id'])
+    failures = redis_client.get_user_count(user['user_id'])
     return config['user_lock_threshold'] <= failures
 
 def ip_banned():
