@@ -70,7 +70,7 @@ class RedisClient(BaseClient):
             raise
         return "Redis::{}::{}::{}".format(self.__module__, self.__class__.__name__, key)
 
-    def pipeline(self, transaction):
+    def pipeline(self, transaction=True):
         return self.client.pipeline(transaction=transaction)
 
     @property
