@@ -87,7 +87,7 @@ def user_locked(user):
     # log = cur.fetchone()
     # cur.close()
 
-    failures = redis_client.get_user_count(user['user_id'])
+    failures = redis_client.get_user_count(user['id'])
     return config['user_lock_threshold'] <= failures
 
 def ip_banned():
