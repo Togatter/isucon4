@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 import os
 import MySQLdb
+from MySQLdb.cursors import DictCursor
 from cache_client import CacheClient
 from flask import (
     _app_ctx_stack
