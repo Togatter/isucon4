@@ -42,6 +42,10 @@ class RedisClient(BaseClient):
     def get_ip_count(self, value):
         return int(self.client.zscore(self._ip_count_key, value) or 0)
 
+    def set_ip_count(self, dicts, pipe=None):
+        client = pipe if pipe else self.client
+        client.zadd(self._ip_count_key, **dicts)
+
     def ip_count_inc(self, value, num):
         return self.client.zincrby(self._ip_count_key , value, num)
 
@@ -50,6 +54,10 @@ class RedisClient(BaseClient):
 
     def get_user_count(self, value):
         return int(self.client.zscore(self._user_count_key, value) or 0)
+
+    def set_user_count(self, dicts, pipe=None):
+        client = pipe if pipe else self.client
+        client.zadd(self._user_count_key, **dicts)
 
     def user_count_inc(self, value, num):
         return self.client.zincrby(self._user_count_key , value, num)
@@ -61,6 +69,9 @@ class RedisClient(BaseClient):
         if key is None:
             raise
         return "Redis::{}::{}::{}".format(self.__module__, self.__class__.__name__, key)
+
+    def pipeline(self, transaction):
+        return self.client.pipeline(transaction=transaction)
 
     @property
     def _ip_count_key(self):
