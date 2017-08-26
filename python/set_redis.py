@@ -3,9 +3,6 @@ import os
 import MySQLdb
 from MySQLdb.cursors import DictCursor
 from cache_client import CacheClient
-from flask import (
-    _app_ctx_stack
-)
 
 redis_client = CacheClient.get()
 
@@ -18,12 +15,6 @@ def connect_db():
     db = MySQLdb.connect(host=host, port=port, db=dbname, user=username, passwd=password, cursorclass=DictCursor, charset='utf8')
     return db
 
-def get_db():
-    top = _app_ctx_stack.top
-    if not hasattr(top, 'database'):
-        top.database = connect_db()
-    return top.database
-
 def init_dict_index(index, dict):
     if index not in dict:
         dict[index] = 0
@@ -31,7 +22,7 @@ def init_dict_index(index, dict):
     return dict
 
 def init_redis():
-    cur = get_db().cursor()
+    cur = connect_db().cursor()
     cur.execute(
         "SELECT * FROM login_log ORDER BY created_at"
     )
