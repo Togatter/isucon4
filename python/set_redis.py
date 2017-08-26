@@ -22,6 +22,9 @@ def init_dict_index(index, dicts):
     return dicts
 
 def init_redis():
+
+    redis_client.flushall()
+
     cur = connect_db().cursor()
     cur.execute(
         "SELECT * FROM login_log ORDER BY created_at"

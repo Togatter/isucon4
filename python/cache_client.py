@@ -73,6 +73,9 @@ class RedisClient(BaseClient):
     def pipeline(self, transaction=True):
         return self.client.pipeline(transaction=transaction)
 
+    def flushall(self):
+        self.client.flushall()
+
     @property
     def _ip_count_key(self):
         return "Redis::{}::{}::{}".format(self.__module__, self.__class__.__name__, "ip_count")
