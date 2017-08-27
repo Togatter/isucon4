@@ -16,6 +16,7 @@ config = {}
 app = Flask(__name__, static_url_path='')
 app.wsgi_app = ProxyFix(app.wsgi_app)
 app.secret_key = os.environ.get('ISU4_SESSION_SECRET', 'shirokane')
+last_login = None
 
 redis_client = CacheClient.get()
 
@@ -71,6 +72,32 @@ def login_log(succeeded, login, user_id=None):
     if succeeded:
         reset_count('user', user_id)
         reset_count('ip', request.remote_addr)
+        global last_login
+        db = get_db()
+        cur = db.cursor()
+        cur.execute(
+            "SELECT created_at FROM last_login WHERE user_id = {} FOR UPDATE".format(user_id)
+        )
+        last_login = cur.fetchone()
+        if last_login:
+            cur.execute(
+                "UPDATE login_log SET created_at = NOW() WHERE user_id = {}".format(user_id)
+            )
+
+        else:
+            import datetime
+            now = datetime.datetime.now()
+            last_login['created_at'] = now.strftime("%Y-%m-%d %H:%M:%S")
+
+            last_login = cur.execute(
+                "INSERT INTO login_log (`created_at`, `user_id`, `login`) VALUES ('{}', {}, '{}')".format(
+                    last_login['created_at'],
+                    user_id,
+                    login,
+                )
+            )
+        cur.close()
+        db.commit()
     else:
         if user_id:
             inc_count('user', user_id)
@@ -230,7 +257,8 @@ def login():
 def mypage():
     user = current_user()
     if user:
-        return render_template('mypage.html', user=user, last_login=last_login())
+        global last_login
+        return render_template('mypage.html', user=user, last_login=last_login)
     else:
         flash('You must be logged in')
         return redirect(url_for('index'))
