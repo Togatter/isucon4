@@ -76,12 +76,12 @@ def login_log(succeeded, login, user_id=None):
         db = get_db()
         cur = db.cursor()
         cur.execute(
-            "SELECT created_at FROM last_login WHERE user_id = {} FOR UPDATE".format(user_id)
+            "SELECT created_at FROM last_login_log WHERE user_id = {} FOR UPDATE".format(user_id)
         )
         last_login = cur.fetchone()
         if last_login:
             cur.execute(
-                "UPDATE login_log SET created_at = NOW() WHERE user_id = {}".format(user_id)
+                "UPDATE last_login_log SET created_at = NOW() WHERE user_id = {}".format(user_id)
             )
 
         else:
@@ -90,7 +90,7 @@ def login_log(succeeded, login, user_id=None):
             last_login['created_at'] = now.strftime("%Y-%m-%d %H:%M:%S")
 
             last_login = cur.execute(
-                "INSERT INTO login_log (`created_at`, `user_id`, `login`) VALUES ('{}', {}, '{}')".format(
+                "INSERT INTO last_login_log (`created_at`, `user_id`, `login`) VALUES ('{}', {}, '{}')".format(
                     last_login['created_at'],
                     user_id,
                     login,
