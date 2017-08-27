@@ -16,7 +16,7 @@ config = {}
 app = Flask(__name__, static_url_path='')
 app.wsgi_app = ProxyFix(app.wsgi_app)
 app.secret_key = os.environ.get('ISU4_SESSION_SECRET', 'shirokane')
-last_login = None
+last_login = {}
 
 redis_client = CacheClient.get()
 
@@ -87,6 +87,7 @@ def login_log(succeeded, login, user_id=None):
         else:
             import datetime
             now = datetime.datetime.now()
+            last_login = {}
             last_login['created_at'] = now.strftime("%Y-%m-%d %H:%M:%S")
 
             last_login = cur.execute(
@@ -169,18 +170,18 @@ def current_user():
     else:
         return None
 
-def last_login():
-    user = current_user()
-    if not user:
-        return None
-
-    cur = get_db().cursor()
-    cur.execute(
-        'SELECT * FROM login_log WHERE succeeded = 1 AND user_id = %s ORDER BY id DESC LIMIT 2',
-        (user['id'],)
-    )
-    rows = cur.fetchall()
-    cur.close()
+#def last_login():
+#    user = current_user()
+#    if not user:
+#        return None
+#
+#    cur = get_db().cursor()
+#    cur.execute(
+#        'SELECT * FROM login_log WHERE succeeded = 1 AND user_id = %s ORDER BY id DESC LIMIT 2',
+#        (user['id'],)
+#    )
+#    rows = cur.fetchall()
+#    cur.close()
     return rows[-1]
 
 def banned_ips():
