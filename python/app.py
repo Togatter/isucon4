@@ -16,7 +16,6 @@ config = {}
 app = Flask(__name__, static_url_path='')
 app.wsgi_app = ProxyFix(app.wsgi_app)
 app.secret_key = os.environ.get('ISU4_SESSION_SECRET', 'shirokane')
-last_login = {}
 
 redis_client = CacheClient.get()
 
@@ -72,16 +71,19 @@ def login_log(succeeded, login, user_id=None):
     if succeeded:
         reset_count('user', user_id)
         reset_count('ip', request.remote_addr)
-        global last_login
         db = get_db()
         cur = db.cursor()
         cur.execute(
-            "SELECT created_at FROM last_login_log WHERE user_id = {} FOR UPDATE".format(user_id)
+            "SELECT now_at FROM last_login_log WHERE user_id = {} FOR UPDATE".format(user_id)
         )
         last_login = cur.fetchone()
         if last_login:
             cur.execute(
-                "UPDATE last_login_log SET created_at = NOW() WHERE user_id = {}".format(user_id)
+                "UPDATE last_login_log SET last_at = '{}' now_at = NOW(), ip = '{}' WHERE user_id = {}".format(
+                    last_login['now_at'].strftime("%Y-%m-%d %H:%M:%S"),
+                    request.remote_addr,
+                    user_id,
+                )
             )
 
         else:
@@ -90,11 +92,13 @@ def login_log(succeeded, login, user_id=None):
             last_login = {}
             last_login['created_at'] = now.strftime("%Y-%m-%d %H:%M:%S")
 
-            last_login = cur.execute(
-                "INSERT INTO last_login_log (`created_at`, `user_id`, `login`) VALUES ('{}', {}, '{}')".format(
+            cur.execute(
+                "INSERT INTO last_login_log (`now_at`, `last_at`, `user_id`, `login`, `ip`) VALUES ('{}', '{}', {}, '{}')".format(
+                    last_login['created_at'],
                     last_login['created_at'],
                     user_id,
                     login,
+                    request.remote_addr,
                 )
             )
         cur.close()
@@ -254,12 +258,22 @@ def login():
             flash('Wrong username or password')
         return redirect(url_for('index'))
 
+def get_last_login(user):
+    cur = get_db().cursor()
+    cur.execute(
+        "SELECT * FROM last_login_log WHERE user_id = {}".format(user['user_id'])
+    )
+
+    last_login = cur.fetchone()
+    cur.close()
+
+    return last_login
+
 @app.route('/mypage')
 def mypage():
     user = current_user()
     if user:
-        global last_login
-        return render_template('mypage.html', user=user, last_login=last_login)
+        return render_template('mypage.html', user=user, last_login=get_last_login(user))
     else:
         flash('You must be logged in')
         return redirect(url_for('index'))
