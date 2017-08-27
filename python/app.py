@@ -79,7 +79,7 @@ def login_log(succeeded, login, user_id=None):
         last_login = cur.fetchone()
         if last_login:
             cur.execute(
-                "UPDATE last_login_log SET last_at = '{}' now_at = NOW(), ip = '{}' WHERE user_id = {}".format(
+                "UPDATE last_login_log SET last_at = '{}', now_at = NOW(), ip = '{}' WHERE user_id = {}".format(
                     last_login['now_at'].strftime("%Y-%m-%d %H:%M:%S"),
                     request.remote_addr,
                     user_id,
@@ -93,7 +93,7 @@ def login_log(succeeded, login, user_id=None):
             last_login['created_at'] = now.strftime("%Y-%m-%d %H:%M:%S")
 
             cur.execute(
-                "INSERT INTO last_login_log (`now_at`, `last_at`, `user_id`, `login`, `ip`) VALUES ('{}', '{}', {}, '{}')".format(
+                "INSERT INTO last_login_log (`now_at`, `last_at`, `user_id`, `login`, `ip`) VALUES ('{}', '{}', {}, '{}', '{}')".format(
                     last_login['created_at'],
                     last_login['created_at'],
                     user_id,
@@ -261,7 +261,7 @@ def login():
 def get_last_login(user):
     cur = get_db().cursor()
     cur.execute(
-        "SELECT * FROM last_login_log WHERE user_id = {}".format(user['user_id'])
+        "SELECT * FROM last_login_log WHERE user_id = {}".format(user['id'])
     )
 
     last_login = cur.fetchone()
