@@ -41,11 +41,12 @@ def update_last_login(login_log):
 
     else:
         cur.execute(
-            "INSERT INTO last_login_log (`now_at`, `last_at`, `user_id`, `login`, `ip`) VALUES ('{}', '{}', {}, '{}', '{}')".format(
+            "INSERT INTO last_login_log (`now_at`, `last_at`, `user_id`, `login`, `ip`, `last_ip`) VALUES ('{}', '{}', {}, '{}', '{}', `{}`)".format(
                 login_log['created_at'],
                 login_log['created_at'],
                 login_log['user_id'],
                 login_log['login'],
+                login_log['ip'],
                 login_log['ip'],
             )
         )

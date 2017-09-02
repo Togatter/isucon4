@@ -94,11 +94,12 @@ def login_log(succeeded, login, user_id=None):
             last_login['created_at'] = now.strftime("%Y-%m-%d %H:%M:%S")
 
             cur.execute(
-                "INSERT INTO last_login_log (`now_at`, `last_at`, `user_id`, `login`, `ip`) VALUES ('{}', '{}', {}, '{}', '{}')".format(
+                "INSERT INTO last_login_log (`now_at`, `last_at`, `user_id`, `login`, `ip`, `last_ip`) VALUES ('{}', '{}', {}, '{}', '{}', '{}')".format(
                     last_login['created_at'],
                     last_login['created_at'],
                     user_id,
                     login,
+                    request.remote_addr,
                     request.remote_addr,
                 )
             )
