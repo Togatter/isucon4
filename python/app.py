@@ -186,7 +186,7 @@ def current_user():
 #    )
 #    rows = cur.fetchall()
 #    cur.close()
-    return rows[-1]
+#     return rows[-1]
 
 def banned_ips():
     global config

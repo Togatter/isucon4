@@ -27,13 +27,13 @@ def init_redis():
 
     cur = connect_db().cursor()
     cur.execute(
-        "SELECT * FROM login_log ORDER BY created_at"
+        "SELECT * FROM login_log ORDER BY id"
     )
     users_fail_count = {}
     ips_fail_count = {}
     for row in cur.fetchall():
 
-        if 'user_id' in row:
+        if row['user_id']:
             user_id = str(row['user_id'])
             users_fail_count = init_dict_index(user_id, users_fail_count)
             if row['succeeded']:
