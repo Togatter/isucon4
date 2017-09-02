@@ -79,9 +79,10 @@ def login_log(succeeded, login, user_id=None):
         last_login = cur.fetchone()
         if last_login:
             cur.execute(
-                "UPDATE last_login_log SET last_at = '{}', now_at = NOW(), ip = '{}' WHERE user_id = {}".format(
+                "UPDATE last_login_log SET last_at = '{}', now_at = NOW(), ip = '{}', last_ip = '{}' WHERE user_id = {}".format(
                     last_login['now_at'].strftime("%Y-%m-%d %H:%M:%S"),
                     request.remote_addr,
+                    last_login['ip'],
                     user_id,
                 )
             )
