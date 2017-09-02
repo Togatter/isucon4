@@ -21,6 +21,36 @@ def init_dict_index(index, dicts):
 
     return dicts
 
+def update_last_login(login_log):
+    db = get_db()
+    cur = db.cursor()
+    cur.execute(
+        "SELECT now_at FROM last_login_log WHERE user_id = {} FOR UPDATE".format(login_log['user_id'])
+    )
+    last_login = cur.fetchone()
+    if last_login:
+        cur.execute(
+            "UPDATE last_login_log SET last_at = '{}', now_at = {}, ip = '{}', last_ip = '{}' WHERE user_id = {}".format(
+                last_login['now_at'].strftime("%Y-%m-%d %H:%M:%S"),
+                login_log['created_at'],
+                last_login['ip'],
+                login_log['user_id'],
+            )
+        )
+
+    else:
+        cur.execute(
+            "INSERT INTO last_login_log (`now_at`, `last_at`, `user_id`, `login`, `ip`) VALUES ('{}', '{}', {}, '{}', '{}')".format(
+                login_log['created_at'],
+                login_log['created_at'],
+                login_log['user_id'],
+                login_log['login'],
+                login_log['ip'],
+            )
+        )
+    cur.close()
+    db.commit()
+
 def init_redis():
 
     redis_client.flushall()
@@ -38,6 +68,7 @@ def init_redis():
             users_fail_count = init_dict_index(user_id, users_fail_count)
             if row['succeeded']:
                 users_fail_count[user_id] = 0
+                update_last_login()
             else:
                 users_fail_count[user_id] += 1
 
