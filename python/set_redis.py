@@ -25,7 +25,7 @@ def update_last_login(login_log):
     db = connect_db()
     cur = db.cursor()
     cur.execute(
-        "SELECT now_at FROM last_login_log WHERE user_id = {} FOR UPDATE".format(login_log['user_id'])
+        "SELECT * FROM last_login_log WHERE user_id = {} FOR UPDATE".format(login_log['user_id'])
     )
     last_login = cur.fetchone()
     if last_login:
