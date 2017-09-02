@@ -55,7 +55,8 @@ def update_last_login(users_login_info, login_log):
     # db.commit()
 
     user_id = str(login_log['user_id'])
-    if users_login_info[user_id] == 0:
+
+    if user_id not in users_login_info:
         users_login_info[user_id] = {
             'now_at': login_log['created_at'].strftime("%Y-%m-%d %H:%M:%S"),
             'last_at': login_log['created_at'].strftime("%Y-%m-%d %H:%M:%S"),
@@ -68,7 +69,7 @@ def update_last_login(users_login_info, login_log):
         user_login_info = copy.deepcopy(users_login_info[user_id])
         users_login_info[user_id] = {
             'now_at': login_log['created_at'].strftime("%Y-%m-%d %H:%M:%S"),
-            'last_at': user_login_info['now'],
+            'last_at': user_login_info['now_at'],
             'user_id': login_log['user_id'],
             'login': login_log['login'],
             'ip': login_log['ip'],
@@ -93,7 +94,6 @@ def init_redis():
         if row['user_id']:
             user_id = str(row['user_id'])
             users_fail_count = init_dict_index(user_id, users_fail_count)
-            users_login_info = init_dict_index(user_id, users_login_info)
             if row['succeeded']:
                 users_fail_count[user_id] = 0
                 users_login_info = update_last_login(users_login_info, row)
@@ -112,7 +112,7 @@ def init_redis():
         redis_client.set_user_count(users_fail_count, pipe)
         redis_client.set_ip_count(ips_fail_count, pipe)
 
-    for row in  users_login_info.iteritems():
+    for user_id, row in  users_login_info.iteritems():
         db = connect_db()
         cur = db.cursor()
 
