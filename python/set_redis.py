@@ -33,6 +33,7 @@ def update_last_login(login_log):
             "UPDATE last_login_log SET last_at = '{}', now_at = {}, ip = '{}', last_ip = '{}' WHERE user_id = {}".format(
                 last_login['now_at'].strftime("%Y-%m-%d %H:%M:%S"),
                 login_log['created_at'],
+                login_log['ip'],
                 last_login['ip'],
                 login_log['user_id'],
             )
