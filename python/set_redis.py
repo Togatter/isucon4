@@ -22,7 +22,7 @@ def init_dict_index(index, dicts):
     return dicts
 
 def update_last_login(login_log):
-    db = get_db()
+    db = connect_db()
     cur = db.cursor()
     cur.execute(
         "SELECT now_at FROM last_login_log WHERE user_id = {} FOR UPDATE".format(login_log['user_id'])
@@ -68,7 +68,7 @@ def init_redis():
             users_fail_count = init_dict_index(user_id, users_fail_count)
             if row['succeeded']:
                 users_fail_count[user_id] = 0
-                update_last_login()
+                update_last_login(row)
             else:
                 users_fail_count[user_id] += 1
 
